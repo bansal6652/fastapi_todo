@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Depends, HTTPException, status, Path
+from fastapi import FastAPI, Depends, HTTPException, status, Path, Query
 from db.models import Todos
 from db.database import engine, Base, db_dependency
 from typing import Annotated
@@ -17,7 +17,17 @@ Base.metadata.create_all(bind=engine)
 async def read_all_list(db:db_dependency):
     return db.query(Todos).all()
 
-@app.get("/{id}" ,tags=["Read Item"], status_code=status.HTTP_200_OK)
+@app.get("/priority/" ,tags=["Read Item"], status_code=status.HTTP_200_OK)
+async def read_tasks_by_priority(db:db_dependency, priority : int = Query(gt=0) ):
+    task = db.query(Todos).filter(Todos.priority == priority).all()
+    if task:
+        return task
+    raise HTTPException(
+        status_code=404,
+        detail=f"No task with id={priority} was found."
+    )
+
+@app.get("/id/{id}" ,tags=["Read Item"], status_code=status.HTTP_200_OK)
 async def read_specific_task(db:db_dependency, id : int = Path(gt=0) ):
     task = db.query(Todos).filter(Todos.id == id).first()
     if task:
@@ -26,6 +36,7 @@ async def read_specific_task(db:db_dependency, id : int = Path(gt=0) ):
         status_code=404,
         detail=f"No task with id={id} was found."
     )
+
 
 @app.post('/todo',tags=["Write Item"], status_code=status.HTTP_201_CREATED)
 async def create_todo(db: db_dependency, todo_request : TodoResponse):
