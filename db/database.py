@@ -3,12 +3,20 @@ from sqlalchemy.orm import sessionmaker,Session
 from sqlalchemy.ext.declarative import declarative_base
 from typing import Annotated
 from fastapi import Depends
+from dotenv import load_dotenv
+import os
 
-SQLALCHEMY_DATABASE_URL = 'sqlite:///./todo.db'
+load_dotenv()
+
+DB_USER = os.getenv("DB_USER")
+DB_PASSWORD = os.getenv("DB_PASSWORD")
+DB_HOST = os.getenv("DB_HOST")
+DB_NAME = os.getenv("DB_NAME")
+
+SQLALCHEMY_DATABASE_URL = f"postgresql+psycopg2://{DB_USER}:{DB_PASSWORD}@{DB_HOST}/{DB_NAME}"
 
 engine = create_engine(
-                        SQLALCHEMY_DATABASE_URL,
-                       connect_args={"check_same_thread" : False}
+                        SQLALCHEMY_DATABASE_URL
                        )
 
 SessionLocal = sessionmaker(autocommit=False,autoflush=False,bind=engine)
@@ -22,5 +30,5 @@ def get_db():
     finally:
         db.close()
 
-db_dependency = Annotated[Session,Depends(get_db)]
 
+db_dependency = Annotated[Session,Depends(get_db)]
